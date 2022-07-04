@@ -1,0 +1,37 @@
+version: '3.4'
+
+services:
+  poc-cache:
+    image: ${DOCKER_REGISTRY-}poccache
+    container_name: poc-cache
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+    - net-poc-cache
+    environment:
+      - ConnectionStrings__DockerRedisConnection=redis:6379,password=123456
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    hostname: redis
+    networks:
+    - net-poc-cache
+    ports:
+      - 6379:6379/tcp
+    command: redis-server --requirepass 123456 --maxmemory 100mb
+
+networks:
+  net-poc-cache:
+    driver: bridge
+  
